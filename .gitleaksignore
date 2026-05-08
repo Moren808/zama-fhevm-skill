@@ -1,3 +1,5 @@
 # One-line-per-finding ignores: <commit>:<path>:<rule>:<line>
 # Populate as needed for historical commits that tripped a rule but are
 # known-safe (e.g. anvil devkeys in historical deploy scripts).
+461747361008748d7b91e5595f724f25b76f91d5:packages/nextjs/utils/helper/networks.ts:generic-api-key:60
+461747361008748d7b91e5595f724f25b76f91d5:packages/nextjs/utils/helper/networks.ts:generic-api-key:64

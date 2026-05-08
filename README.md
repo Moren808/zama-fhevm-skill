@@ -9,6 +9,7 @@
 AI coding agents have no built-in knowledge of FHE or FHEVM. Ask Claude Code or Cursor to "write a confidential voting contract" without any context and you'll get incorrect patterns, missing ACL calls, wrong import paths, and broken logic.
 
 The most common mistakes:
+
 - Using the old `TFHE` import instead of `FHE`
 - Forgetting `FHE.allowThis()` after every arithmetic operation
 - Trying to branch on `ebool` with `if/else`
@@ -73,12 +74,12 @@ Add `SKILL.md` to your project root. These agents automatically pick up `.md` fi
 
 The skill was tested against these prompts in Claude Code:
 
-| Prompt | Result |
-|---|---|
-| "Write a confidential voting contract" | Compiles, correct ACL, FHE.select used |
-| "How do I build a confidential ERC-7984 token?" | Correct OZ imports, mint/burn pattern |
-| "What's wrong with my contract?" + missing allowThis | Skill catches it |
-| "Encrypt a value in the frontend and send to contract" | Correct fhevmjs pattern |
+| Prompt                                                 | Result                                 |
+| ------------------------------------------------------ | -------------------------------------- |
+| "Write a confidential voting contract"                 | Compiles, correct ACL, FHE.select used |
+| "How do I build a confidential ERC-7984 token?"        | Correct OZ imports, mint/burn pattern  |
+| "What's wrong with my contract?" + missing allowThis   | Skill catches it                       |
+| "Encrypt a value in the frontend and send to contract" | Correct fhevmjs pattern                |
 
 ## Running the examples
 
@@ -104,14 +105,14 @@ npx hardhat run scripts/deploy.ts --network sepolia
 
 ## Tech stack
 
-| Tool | Version |
-|---|---|
-| Solidity | ^0.8.27 |
-| @fhevm/solidity | latest |
-| @openzeppelin/confidential-contracts | latest |
-| Hardhat | ^2.22 |
-| fhevmjs | latest |
-| ethers | ^6 |
+| Tool                                 | Version |
+| ------------------------------------ | ------- |
+| Solidity                             | ^0.8.27 |
+| @fhevm/solidity                      | latest  |
+| @openzeppelin/confidential-contracts | latest  |
+| Hardhat                              | ^2.22   |
+| fhevmjs                              | latest  |
+| ethers                               | ^6      |
 
 ## License
 

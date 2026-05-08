@@ -10,12 +10,14 @@
 FHEVM is Zama's framework for confidential smart contracts on EVM-compatible chains. It uses **Fully Homomorphic Encryption (FHE)** — meaning the EVM can compute on encrypted data without ever decrypting it.
 
 **The key difference from standard Solidity:**
+
 - Sensitive values are stored as **ciphertext handles** (encrypted integers on a co-processor)
 - Computation happens on the co-processor, not in the EVM directly
 - The EVM stores handles (pointers), not plaintext values
 - Decryption requires explicit authorization + off-chain key management
 
 **The stack:**
+
 ```
 User's browser (fhevmjs)
     → encrypts input locally
@@ -45,6 +47,7 @@ Gateway (for decryption requests)
 ## 2. Development Environment Setup
 
 ### Fork the official template first
+
 ```bash
 # This is the fastest setup — fork this repo
 # https://github.com/zama-ai/fhevm-react-template
@@ -55,18 +58,21 @@ npm install
 ```
 
 ### Environment variables (.env)
+
 ```bash
 SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY
 PRIVATE_KEY=0x...
 ```
 
 ### Key packages
+
 ```bash
 npm install @fhevm/solidity
 npm install @openzeppelin/confidential-contracts  # for ERC-7984
 ```
 
 ### hardhat.config.ts — required structure
+
 ```typescript
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
@@ -95,21 +101,23 @@ export default config;
 ## 3. Encrypted Types
 
 ### Type reference
-| Solidity Type | Size | Description |
-|---|---|---|
-| `euint8` | 8-bit | Encrypted unsigned integer |
-| `euint16` | 16-bit | Encrypted unsigned integer |
-| `euint32` | 32-bit | Encrypted unsigned integer |
-| `euint64` | 64-bit | Most common — used for balances, amounts |
-| `euint128` | 128-bit | Large integers |
-| `euint256` | 256-bit | Max precision |
-| `ebool` | 1-bit | Encrypted boolean |
-| `eaddress` | 160-bit | Encrypted Ethereum address |
-| `externalEuint8` … `externalEuint256` | — | Input type for user-provided encrypted values |
-| `externalEbool` | — | Input type for user-provided encrypted booleans |
-| `externalEaddress` | — | Input type for user-provided encrypted addresses |
+
+| Solidity Type                         | Size    | Description                                      |
+| ------------------------------------- | ------- | ------------------------------------------------ |
+| `euint8`                              | 8-bit   | Encrypted unsigned integer                       |
+| `euint16`                             | 16-bit  | Encrypted unsigned integer                       |
+| `euint32`                             | 32-bit  | Encrypted unsigned integer                       |
+| `euint64`                             | 64-bit  | Most common — used for balances, amounts         |
+| `euint128`                            | 128-bit | Large integers                                   |
+| `euint256`                            | 256-bit | Max precision                                    |
+| `ebool`                               | 1-bit   | Encrypted boolean                                |
+| `eaddress`                            | 160-bit | Encrypted Ethereum address                       |
+| `externalEuint8` … `externalEuint256` | —       | Input type for user-provided encrypted values    |
+| `externalEbool`                       | —       | Input type for user-provided encrypted booleans  |
+| `externalEaddress`                    | —       | Input type for user-provided encrypted addresses |
 
 ### Required imports
+
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
@@ -120,6 +128,7 @@ import { ZamaEthereumConfig } from "@fhevm/solidity/config/ZamaConfig.sol";
 ```
 
 ### Casting between types
+
 ```solidity
 // Plaintext to encrypted
 euint64 val = FHE.asEuint64(0);         // from literal
@@ -134,6 +143,7 @@ ebool   flag  = FHE.asEbool(uint8Val);   // euint8 → ebool
 ```
 
 ### Converting user inputs
+
 ```solidity
 // User provides externalEuintXX + bytes inputProof
 // ALWAYS validate with FHE.fromExternal before using
@@ -150,6 +160,7 @@ function deposit(externalEuint64 encryptedAmount, bytes calldata inputProof) ext
 All operations are on **encrypted values**. Results are encrypted handles.
 
 ### Arithmetic
+
 ```solidity
 euint64 sum  = FHE.add(a, b);    // a + b (both encrypted)
 euint64 diff = FHE.sub(a, b);    // a - b
@@ -162,6 +173,7 @@ euint64 neg  = FHE.neg(a);       // -a
 ```
 
 ### Bitwise
+
 ```solidity
 euint64 and  = FHE.and(a, b);
 euint64 or   = FHE.or(a, b);
@@ -172,6 +184,7 @@ euint64 shr  = FHE.shr(a, 2);   // right shift by plaintext
 ```
 
 ### Comparison (return ebool)
+
 ```solidity
 ebool eq = FHE.eq(a, b);   // a == b
 ebool ne = FHE.ne(a, b);   // a != b
@@ -182,6 +195,7 @@ ebool ge = FHE.ge(a, b);   // a >= b
 ```
 
 ### Conditional / Branching — CRITICAL
+
 ```solidity
 // CORRECT — encrypted ternary, never if/else on ebool
 euint64 result = FHE.select(condition, valueIfTrue, valueIfFalse);
@@ -191,6 +205,7 @@ euint64 result = FHE.select(condition, valueIfTrue, valueIfFalse);
 ```
 
 ### Randomness
+
 ```solidity
 euint8  r8  = FHE.randEuint8();
 euint32 r32 = FHE.randEuint32();
@@ -256,6 +271,7 @@ function forwardToVault(euint64 amount) internal {
 ```
 
 ### Constructor pattern (initialization)
+
 ```solidity
 constructor() {
     // Use FHE.asEuintX for plaintext initialization
@@ -290,6 +306,7 @@ function submitBid(
 ```
 
 ### Multiple encrypted inputs — one proof handles all
+
 ```solidity
 function submitOrder(
     externalEuint64 encryptedAmount,
@@ -303,22 +320,20 @@ function submitOrder(
 ```
 
 ### TypeScript — creating encrypted inputs (fhevmjs)
+
 ```typescript
 import { createInstance } from "fhevmjs";
 
 const instance = await createInstance({
-  chainId: 11155111,  // Sepolia
+  chainId: 11155111, // Sepolia
   networkUrl: process.env.SEPOLIA_RPC_URL,
   gatewayUrl: "https://gateway.sepolia.zama.ai",
-  aclAddress: "YOUR_ACL_ADDRESS",  // see: https://docs.zama.org/protocol/protocol-apps/addresses/testnet/sepolia
+  aclAddress: "YOUR_ACL_ADDRESS", // see: https://docs.zama.org/protocol/protocol-apps/addresses/testnet/sepolia
 });
 
 // Encrypt input for a specific contract
-const encrypted = await instance.createEncryptedInput(
-  contractAddress,
-  userAddress
-);
-encrypted.add64(BigInt(1000));  // add a euint64 value
+const encrypted = await instance.createEncryptedInput(contractAddress, userAddress);
+encrypted.add64(BigInt(1000)); // add a euint64 value
 const { handles, inputProof } = encrypted.encrypt();
 
 // handles[0] is the externalEuint64 to pass to the contract
@@ -332,6 +347,7 @@ const { handles, inputProof } = encrypted.encrypt();
 Users can decrypt values they have ACL access to. This happens **client-side** — the user's browser gets a re-encrypted version only they can decrypt.
 
 ### The flow
+
 1. User generates an ephemeral keypair in their browser
 2. User signs the public key using EIP-712 (proves ownership)
 3. Client calls contract's view function to get the ciphertext handle
@@ -340,6 +356,7 @@ Users can decrypt values they have ACL access to. This happens **client-side** �
 6. Client decrypts locally with private key
 
 ### Solidity — expose the handle
+
 ```solidity
 // Return the encrypted handle — callers must have ACL access
 function getMyBid() external view returns (euint64) {
@@ -349,6 +366,7 @@ function getMyBid() external view returns (euint64) {
 ```
 
 ### TypeScript — full user decryption flow
+
 ```typescript
 import { createInstance } from "fhevmjs";
 import { BrowserProvider } from "ethers";
@@ -372,7 +390,7 @@ const eip712 = instance.createEIP712(publicKey, contractAddress);
 const signature = await signer.signTypedData(
   eip712.domain,
   { Reencrypt: eip712.types.Reencrypt },
-  eip712.message
+  eip712.message,
 );
 
 // Step 3: call contract to get the handle
@@ -385,7 +403,7 @@ const decryptedValue = await instance.reencrypt(
   publicKey,
   signature,
   contractAddress,
-  userAddress
+  userAddress,
 );
 
 console.log("Your bid:", decryptedValue);
@@ -455,6 +473,7 @@ contract ConfidentialVoting is ZamaEthereumConfig {
 ## 9. Frontend Integration (fhevmjs)
 
 ### Installation
+
 ```bash
 npm install fhevmjs
 # For React (Vite recommended — CRA has WASM issues)
@@ -463,21 +482,23 @@ cd my-app && npm install fhevmjs ethers
 ```
 
 ### Initialization
+
 ```typescript
 import { initFhevm, createInstance } from "fhevmjs";
 
 // Call once at app startup
-await initFhevm();  // loads WASM — required before createInstance
+await initFhevm(); // loads WASM — required before createInstance
 
 const instance = await createInstance({
-  chainId: 11155111,   // Sepolia testnet
+  chainId: 11155111, // Sepolia testnet
   networkUrl: "https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY",
   gatewayUrl: "https://gateway.sepolia.zama.ai",
-  aclAddress: "0x...",   // see Sepolia registry in Zama docs
+  aclAddress: "0x...", // see Sepolia registry in Zama docs
 });
 ```
 
 ### Encrypting input and calling a contract
+
 ```typescript
 import { ethers } from "ethers";
 import { createInstance } from "fhevmjs";
@@ -487,11 +508,8 @@ async function encryptAndVote(voteYes: boolean) {
   const signer = await provider.getSigner();
   const user = await signer.getAddress();
 
-  const encInput = await instance.createEncryptedInput(
-    CONTRACT_ADDRESS,
-    user
-  );
-  encInput.addBool(voteYes);  // adds an ebool
+  const encInput = await instance.createEncryptedInput(CONTRACT_ADDRESS, user);
+  encInput.addBool(voteYes); // adds an ebool
   const { handles, inputProof } = encInput.encrypt();
 
   // handles[0] = externalEbool value
@@ -504,15 +522,16 @@ async function encryptAndVote(voteYes: boolean) {
 ```
 
 ### Common fhevmjs input methods
+
 ```typescript
 const encInput = await instance.createEncryptedInput(contractAddr, userAddr);
 
-encInput.addBool(true);            // → externalEbool
-encInput.add8(42);                 // → externalEuint8
-encInput.add16(1000);              // → externalEuint16
-encInput.add32(99999);             // → externalEuint32
+encInput.addBool(true); // → externalEbool
+encInput.add8(42); // → externalEuint8
+encInput.add16(1000); // → externalEuint16
+encInput.add32(99999); // → externalEuint32
 encInput.add64(BigInt("100000")); // → externalEuint64
-encInput.addAddress("0x...");      // → externalEaddress
+encInput.addAddress("0x..."); // → externalEaddress
 
 const { handles, inputProof } = encInput.encrypt();
 // handles[0], handles[1], ... match the order of add* calls
@@ -524,6 +543,7 @@ const { handles, inputProof } = encInput.encrypt();
 ## 10. Testing FHEVM Contracts
 
 ### Mock mode (local dev — no testnet needed)
+
 ```typescript
 import { ethers, fhevm } from "hardhat";
 // The fhevm hardhat plugin provides mock FHE in local tests
@@ -542,11 +562,8 @@ describe("ConfidentialVoting", function () {
   it("should cast an encrypted vote", async function () {
     // Create encrypted input for voter1
     const instance = await fhevm.createFhevmInstance();
-    const encInput = await instance.createEncryptedInput(
-      voting.target,
-      voter1.address
-    );
-    encInput.addBool(true);  // voting yes
+    const encInput = await instance.createEncryptedInput(voting.target, voter1.address);
+    encInput.addBool(true); // voting yes
     const { handles, inputProof } = encInput.encrypt();
 
     const tx = await voting.connect(voter1).vote(handles[0], inputProof);
@@ -570,10 +587,13 @@ describe("ConfidentialVoting", function () {
 ```
 
 ### Testnet testing
+
 For real Sepolia tests, set `PRIVATE_KEY` and `SEPOLIA_RPC_URL` and run:
+
 ```bash
 npx hardhat test --network sepolia
 ```
+
 Note: testnet FHE operations are slower (~5–30s per operation). Use mock for development, testnet for final validation.
 
 ---
@@ -581,6 +601,7 @@ Note: testnet FHE operations are slower (~5–30s per operation). Use mock for d
 ## 11. Common Anti-Patterns and Mistakes
 
 ### ❌ Missing FHE.allowThis() after storing
+
 ```solidity
 // WRONG — contract can't read its own value next call
 function store(externalEuint64 enc, bytes calldata proof) external {
@@ -597,6 +618,7 @@ function store(externalEuint64 enc, bytes calldata proof) external {
 ```
 
 ### ❌ Branching on encrypted boolean
+
 ```solidity
 // WRONG — ebool cannot be used in if/require
 function maybeAdd(ebool condition, euint64 a, euint64 b) internal {
@@ -610,6 +632,7 @@ function maybeAdd(ebool condition, euint64 a, euint64 b) internal {
 ```
 
 ### ❌ Encrypting in constructor using user input
+
 ```solidity
 // WRONG — constructor runs on deployment, not per-user
 constructor(externalEuint64 enc, bytes calldata proof) {
@@ -624,6 +647,7 @@ constructor() {
 ```
 
 ### ❌ Returning encrypted value from view function without ACL
+
 ```solidity
 // WRONG — anyone calling this gets a handle they can't use (misleading)
 function getBalance(address user) external view returns (euint64) {
@@ -641,6 +665,7 @@ function getBalance(address user) external view returns (euint64) {
 ```
 
 ### ❌ Using div/rem with encrypted divisors
+
 ```solidity
 // WRONG — encrypted divisors not supported
 euint64 result = FHE.div(a, b);  // b is euint64 — fails
@@ -650,6 +675,7 @@ euint64 result = FHE.div(a, 4);  // 4 is plaintext uint
 ```
 
 ### ❌ Forgetting FHE.allowThis() after arithmetic operations
+
 ```solidity
 // WRONG — result of add() is a new handle — old ACL doesn't carry
 function increment() external {
@@ -665,6 +691,7 @@ function increment() external {
 ```
 
 ### ❌ Using wrong import path (old TFHE vs new FHE)
+
 ```solidity
 // WRONG — old API, don't use
 import { TFHE } from "@fhevm/solidity/lib/TFHE.sol";
@@ -675,6 +702,7 @@ import { ZamaEthereumConfig } from "@fhevm/solidity/config/ZamaConfig.sol";
 ```
 
 ### ❌ Expecting encrypted operations to revert on failure
+
 ```solidity
 // NOTE: FHE operations often don't revert on logical errors
 // e.g. subtraction underflow returns 0, not a revert
@@ -695,11 +723,13 @@ function safeSubtract(euint64 a, euint64 b) internal returns (euint64) {
 ERC-7984 is the confidential token standard — "encrypted ERC-20". Balances and transfer amounts are stored as `euint64` handles.
 
 ### Installation
+
 ```bash
 npm install @openzeppelin/confidential-contracts
 ```
 
 ### Minimal ERC-7984 token
+
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
@@ -740,6 +770,7 @@ contract MyConfidentialToken is ZamaEthereumConfig, ERC7984, Ownable2Step {
 ```
 
 ### Key ERC-7984 interface
+
 ```solidity
 // Transfer functions (8 variants — combinations of with/without proof, transferFrom/transfer)
 confidentialTransfer(address to, externalEuint64 amount, bytes inputProof) → euint64
@@ -753,6 +784,7 @@ confidentialTotalSupply() → euint64
 ```
 
 ### Wrapping ERC-20 → ERC-7984
+
 ```solidity
 import { ERC7984ERC20Wrapper } from "@openzeppelin/confidential-contracts/token/ERC7984/extensions/ERC7984ERC20Wrapper.sol";
 
@@ -767,15 +799,16 @@ contract WrappedToken is ZamaEthereumConfig, ERC7984ERC20Wrapper {
 ```
 
 ### Available OZ Confidential Contract extensions
-| Extension | Purpose |
-|---|---|
-| `ERC7984ERC20Wrapper` | Wrap ERC-20 into confidential ERC-7984 |
-| `ERC7984Freezable` | Freeze accounts (role-based) |
-| `ERC7984Restricted` | Blocklist / allowlist accounts |
-| `ERC7984ObserverAccess` | Grant read access to a third party |
-| `ERC7984Omnibus` | Encrypted sub-account transfers (exchange use) |
-| `ERC7984Rwa` | RWA compliance: compliance checks + forced transfers |
-| `ERC7984Votes` | Governance voting on confidential token balances |
+
+| Extension               | Purpose                                              |
+| ----------------------- | ---------------------------------------------------- |
+| `ERC7984ERC20Wrapper`   | Wrap ERC-20 into confidential ERC-7984               |
+| `ERC7984Freezable`      | Freeze accounts (role-based)                         |
+| `ERC7984Restricted`     | Blocklist / allowlist accounts                       |
+| `ERC7984ObserverAccess` | Grant read access to a third party                   |
+| `ERC7984Omnibus`        | Encrypted sub-account transfers (exchange use)       |
+| `ERC7984Rwa`            | RWA compliance: compliance checks + forced transfers |
+| `ERC7984Votes`          | Governance voting on confidential token balances     |
 
 ---
 
@@ -787,7 +820,7 @@ pragma solidity ^0.8.27;
 
 /**
  * ConfidentialVoting — encrypted votes, public result reveal
- * 
+ *
  * Demonstrates: input proofs, ACL, FHE.select, FHE.add, public decryption
  */
 
@@ -863,14 +896,14 @@ contract ConfidentialVoting is ZamaEthereumConfig {
 
 ## Resources
 
-| Resource | URL |
-|---|---|
-| Zama Protocol Docs | https://docs.zama.org/protocol/ |
-| FHEVM React Template | https://github.com/zama-ai/fhevm-react-template |
-| FHEVM Solidity Library | https://github.com/zama-ai/fhevm-solidity |
-| OZ Confidential Contracts | https://github.com/OpenZeppelin/openzeppelin-confidential-contracts |
-| OZ Confidential Docs | https://docs.openzeppelin.com/confidential-contracts/ |
-| ERC-7984 Docs | https://docs.openzeppelin.com/confidential-contracts/token |
-| FHEVM Examples | https://docs.zama.org/protocol/examples/ |
-| Sepolia Token Registry | https://docs.zama.org/protocol/protocol-apps/addresses/testnet/sepolia |
-| FHEVM Bootcamp | https://www.mintlify.com/Himess/fhevm-bootcamp/introduction |
+| Resource                  | URL                                                                    |
+| ------------------------- | ---------------------------------------------------------------------- |
+| Zama Protocol Docs        | https://docs.zama.org/protocol/                                        |
+| FHEVM React Template      | https://github.com/zama-ai/fhevm-react-template                        |
+| FHEVM Solidity Library    | https://github.com/zama-ai/fhevm-solidity                              |
+| OZ Confidential Contracts | https://github.com/OpenZeppelin/openzeppelin-confidential-contracts    |
+| OZ Confidential Docs      | https://docs.openzeppelin.com/confidential-contracts/                  |
+| ERC-7984 Docs             | https://docs.openzeppelin.com/confidential-contracts/token             |
+| FHEVM Examples            | https://docs.zama.org/protocol/examples/                               |
+| Sepolia Token Registry    | https://docs.zama.org/protocol/protocol-apps/addresses/testnet/sepolia |
+| FHEVM Bootcamp            | https://www.mintlify.com/Himess/fhevm-bootcamp/introduction            |
